@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Global Psychiatrists Dataset</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .flag { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    .loader { display: none; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full">
+    <h1 class="text-3xl font-bold text-center text-indigo-700 mb-2">Global Psychiatrists Dataset</h1>
+    <p class="text-center text-gray-600 mb-6">Open, Legal, Ethical — From Government Registries</p>
+
+    <div id="countries" class="grid grid-cols-2 gap-4 mb-6"></div>
+
+    <label class="flex items-center gap-2 mb-6 cursor-pointer">
+      <input type="checkbox" id="includeEmail" checked class="w-5 h-5 text-indigo-600" />
+      <span class="text-gray-700">Include business email (if available)</span>
+    </label>
+
+    <button id="generateBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition">
+      Generate & Download CSV
+    </button>
+
+    <div id="loader" class="loader text-center mt-4 text-indigo-600">
+      <svg class="animate-spin inline w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Generating...
+    </div>
+
+    <p id="status" class="mt-4 text-sm text-gray-500 text-center"></p>
+  </div>
+
+  <script>
+    const countries = {
+      USA: { flag: "https://flagcdn.com/us.svg", enabled: true },
+      UK: { flag: "https://flagcdn.com/gb.svg", enabled: false, note: "No bulk CSV" },
+      Australia: { flag: "https://flagcdn.com/au.svg", enabled: false, note: "Search only" },
+      France: { flag: "https://flagcdn.com/fr.svg", enabled: false, note: "No open data" },
+      Germany: { flag: "https://flagcdn.com/de.svg", enabled: false, note: "No bulk CSV" }
+    };
+
+    const container = document.getElementById('countries');
+    Object.entries(countries).forEach(([code, data]) => {
+      const div = document.createElement('div');
+      div.className = `flex items-center gap-3 p-3 rounded-lg border ${data.enabled ? 'border-gray-300' : 'border-gray-200 bg-gray-50'}`;
+      div.innerHTML = `
+        <input type="checkbox" id="${code}" ${data.enabled ? 'checked' : 'disabled'} class="w-5 h-5 text-indigo-600" />
+        <img src="${data.flag}" class="flag" alt="${code}" />
+        <label for="${code}" class="font-medium ${!data.enabled && 'text-gray-400'}">${code}</label>
+        ${!data.enabled ? `<span class="text-xs text-gray-500 ml-auto">${data.note}</span>` : ''}
+      `;
+      container.appendChild(div);
+    });
+
+    document.getElementById('generateBtn').onclick = async () => {
+      const selected = Array.from(document.querySelectorAll('#countries input:checked'))
+        .map(cb => cb.id).filter(id => countries[id].enabled);
+      const email = document.getElementById('includeEmail').checked;
+
+      if (selected.length === 0) {
+        alert("Please select at least one enabled country (USA)");
+        return;
+      }
+
+      document.getElementById('generateBtn').style.display = 'none';
+      document.getElementById('loader').style.display = 'block';
+      document.getElementById('status').textContent = `Downloading from ${selected.join(', ')}...`;
+
+      const url = `/api/generate?countries=${selected.join(',')}&email=${email}`;
+      window.location.href = url;
+    };
+  </script>
+</body>
+</html>
